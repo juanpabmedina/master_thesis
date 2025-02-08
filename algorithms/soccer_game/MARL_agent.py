@@ -57,8 +57,41 @@ class MARLAgent:
         if random.random() < self.epsilon:
             return random.choice(self.actions)
         else:
-            a = np.argmax(list(self.pi_table[state].values()))
-            return self.actions[a]
+            if any(self.pi_table[state]) < 0:
+                print("jueputa 0")
+            return self.select_action(self.pi_table[state])
+    
+    import numpy as np
+
+    def select_action(self, policy):
+        """
+        Select an action based on the optimized policy π[s, .].
+        
+        Args:
+            policy (dict): A dictionary where keys are actions and values are probabilities.
+            
+        Returns:
+            int: The selected action.
+        """
+        actions = list(policy.keys())  # List of available actions
+        probabilities = np.array(list(policy.values()))  # Convert to numpy array
+
+        # Clip small negative values due to floating-point precision errors
+        probabilities = np.clip(probabilities, 0, 1)
+
+        # Normalize to ensure sum is exactly 1
+        probabilities /= np.sum(probabilities)
+
+        # Try to sample an action
+        try:
+            chosen_action = np.random.choice(actions, p=probabilities)
+            return chosen_action
+        except ValueError as e:
+            print(f"Error selecting action: {e}")
+            print(f"Probabilities: {probabilities}, Sum: {np.sum(probabilities)}")
+            print(f"Actions: {actions}")
+            raise  # Re-raise the error for debugging
+
 
     def update(self, state, action, opponent_action, joint_reward, next_state, agent = 'A'):
         """Update Q, π, and V after observing reward and transitioning to next state."""
@@ -123,13 +156,16 @@ class MARLAgent:
         A_eq = [equality_row]
         b_eq = [1]
 
-        # π[a] >= 0 for all a
-        for i in range(num_actions):
-            constraint = [0] + [-1 if j == i else 0 for j in range(num_actions)]
-            G.append(constraint)
-            h.append(0)
+        # # π[a] >= 0 for all a
+        # for i in range(num_actions):
+        #     constraint = [0] + [-1 if j == i else 0 for j in range(num_actions)]
+        #     G.append(constraint)
+        #     h.append(0)
 
-        result = linprog(c, A_ub=G, b_ub=h, A_eq=A_eq, b_eq=b_eq, bounds=(None, None), method='highs')
+            # Define bounds: v is unbounded, π[a] ∈ [0,1]
+        bounds = [(None, None)] + [(0, 1)] * num_actions
+
+        result = linprog(c, A_ub=G, b_ub=h, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method='highs')
 
         if result.success:
             v = result.x[0]
