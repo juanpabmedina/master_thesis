@@ -61,7 +61,6 @@ class MARLAgent:
                 print("jueputa 0")
             return self.select_action(self.pi_table[state])
     
-    import numpy as np
 
     def select_action(self, policy):
         """

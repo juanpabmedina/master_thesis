@@ -100,7 +100,7 @@ class MinimaxTrainer:
             if render:
                 self.game.print_state()
                 sleep(0.5)
-                if self.game.scores[player] == 2:
+                if self.game.scores[player] == 5:
                     break
         
         win_rate = (count_win / count * 100) if count > 0 else 0
