@@ -8,16 +8,36 @@ class Prosumer:
         self.name = agent_parameters['name']
         self.agent_actions = agent_parameters['actions']
         self.opponent_actions = agent_parameters['opponent_actions']
-        self.agent_states = agent_parameters['states']
+        self.agent_generation = agent_parameters['generation']
+        self.agent_consumption = agent_parameters['consumption']
         self.epsilon = agent_parameters['epsilon']
         self.rol = agent_parameters['rol']
 
+        self.gdr = self.agent_generation / self.agent_consumption
+
+        if self.rol == 'generator':
+            self.agent_states = self.agent_generation
+        elif self.rol == 'consumer':
+            self.agent_states = self.agent_consumption
 
         # Initialize Q, V, and policy π
         self.q_table = {}
         self.v_table = {}
         self.pi_table = {}
+        # self.get_rol(0)
         self.getInitLists()
+
+
+    def get_rol(self,t):
+
+        # if self.gdr[t] > 1:
+        #     self.rol = 'generator'
+        #     self.agent_states = -self.agent_generation
+        # else:
+        #     self.rol = 'consumer'
+        #     self.agent_states = self.agent_consumption
+
+        return self.rol
 
     def getInitLists(self):
         for state in self.agent_states:

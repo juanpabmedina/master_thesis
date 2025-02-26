@@ -18,6 +18,7 @@ class MinimaxTrainer:
 
         with tqdm(total=steps, desc="Progreso", unit="step") as pbar:
             for i in range(steps):
+                t = 10
                 # Agent action and next state
                 action = round(self.agent.choose_action(state),2)
                 next_state = self.agent.get_next_state(state, action)
@@ -27,7 +28,8 @@ class MinimaxTrainer:
                 next_opponent_state = self.opponent.get_next_state(opponent_state, opponent_action)
 
                 # Obtein the reward
-                reward = self.enviroment.get_reward(rol=self.agent.rol, generator_state=state, consumer_state=opponent_state)
+                agent_rol = self.agent.get_rol(t)
+                reward = self.enviroment.get_reward(rol=agent_rol, generator_state=state, consumer_state=opponent_state)
                 self.hist_reward.append(reward)
 
                 # Calculate the new policy
