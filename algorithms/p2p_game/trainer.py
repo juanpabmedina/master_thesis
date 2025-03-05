@@ -93,8 +93,8 @@ class MinimaxTrainer:
             for i in range(steps):
                 # print('state: ', agent1.state, agent2.state)
                 # Agent action and next state
-                action = round(self.agent1.select_action(self.agent1.pi_table[self.agent1.state]),2)
-                opponent_action = round(self.agent2.select_action(self.agent2.pi_table[self.agent2.state]),2)
+                action = round(self.agent1.select_action(pi_table1[self.agent1.state]),2)
+                opponent_action = round(self.agent2.select_action(pi_table2[self.agent2.state]),2)
 
                 # print('action: ', action, opponent_action)
 
