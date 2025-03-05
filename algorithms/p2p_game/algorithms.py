@@ -18,7 +18,6 @@ class MinimaxQ:
 
     def update(self, state, action, opponent_action, reward, next_state):
         """Update Q, π, and V after observing reward and transitioning to next state."""
-            
         # Update Q-value
         self.q_table[state][action][opponent_action] = (1 - self.alpha) *  self.q_table[state][action][opponent_action] + self.alpha * (reward + self.gamma*self.v_table[next_state])
         
@@ -66,7 +65,7 @@ class MinimaxQ:
         for o in self.opponent_actions:
             row = [1]  # Coefficient for v
             for a in self.agent_actions:
-                row.append(self.q_table[state][a][o])  # Coefficients for -π[a] * Q[s, a, o]
+                row.append(-self.q_table[state][a][o])  # Coefficients for -π[a] * Q[s, a, o]
             G.append(row)
             h.append(0)
 
