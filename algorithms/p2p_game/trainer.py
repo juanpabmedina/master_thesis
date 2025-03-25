@@ -12,10 +12,10 @@ class MinimaxTrainer:
         self.market_env = P2PEnergyMarketEnv(a = 0.089, b = 52, c = 0)
 
     
-    def trainMR(self, init_generator_state, init_consumer_state, steps):
+    def trainMR(self, init_agent1_state, init_agent2_state, steps):
         """Ejecuta el entrenamiento minimax."""
-        self.agent1.state = (init_generator_state, init_consumer_state)
-        self.agent2.state = (init_consumer_state, init_generator_state)
+        self.agent1.state = (init_agent1_state, init_agent2_state)
+        self.agent2.state = (init_agent2_state, init_agent1_state)
         hist_reward = []
         self.agent1.resetAgent()
         self.agent2.resetAgent()
@@ -33,7 +33,7 @@ class MinimaxTrainer:
                 # print('Joint action: ',joint_action1, joint_action2)
 
                 next_state1, reward1 = self.market_env.step(self.agent1, joint_action=joint_action1)
-                next_state2, reward2 = self.market_env.step(self.agent2, joint_action=joint_action2)
+                next_state2, _ = self.market_env.step(self.agent2, joint_action=joint_action2)
 
                 # print('step 1: ', next_state1, reward1)
                 # print('step 2: ', next_state2, reward2)
