@@ -26,7 +26,11 @@ def plot_rewards(rewards, title, window_size=10):
     plt.show()
 
 def evaluate_and_plot_transactions(agent_G, agent_C, gen_state, con_state,episodes=100):
-    env = EnergyMarketEnv(init_gen_power=gen_state, init_con_price=con_state, threshold=1)
+    env = EnergyMarketEnv(a=0.1, b=2, c=0, 
+                        init_gen_power=gen_state, init_con_price=con_state,
+                        min_power=0.1, max_power=0.5,
+                        min_price=1.0, max_price=5, 
+                        threshold=0)
     gen_states = []
     con_states = []
 
@@ -56,7 +60,11 @@ def evaluate_and_plot_transactions(agent_G, agent_C, gen_state, con_state,episod
     plt.show()
 
 def train_agent(mode='MR', total_steps=100000, eval_interval=1000):
-    env = EnergyMarketEnv()
+    env = EnergyMarketEnv( a=0.1, b=2, c=0, 
+                        init_gen_power=2, init_con_price=0.2,
+                        min_power=0.1, max_power=0.5,
+                        min_price=1.0, max_price=5, 
+                        threshold=0)
 
     agent_G = MinimaxQAgent(player_id='G', actions=GENERATOR_ACTIONS)
 

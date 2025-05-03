@@ -3,8 +3,8 @@ import numpy as np
 class EnergyMarketEnv:
     def __init__(self, a=0.1, b=2, c=0, 
                  init_gen_power=10, init_con_price=1,
-                 min_power=0.1, max_power=10.0,
-                 min_price=1.0, max_price=20.0, 
+                 min_power=0.1, max_power=0.5,
+                 min_price=1.0, max_price=5, 
                  threshold=0.0):
         """
         Initialize the Energy Market Environment.
@@ -61,8 +61,8 @@ class EnergyMarketEnv:
         profit = self.con_price - Hg
 
         if profit >= self.threshold:
-            generator_reward = profit
-            consumer_reward = -profit
+            generator_reward = 1
+            consumer_reward = -1
             done = True
         else:
             generator_reward = 0.0
