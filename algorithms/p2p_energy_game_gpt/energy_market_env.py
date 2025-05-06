@@ -56,11 +56,14 @@ class EnergyMarketEnv:
         self.gen_power = np.clip(self.gen_power, self.min_power, self.max_power)
         self.con_price = np.clip(self.con_price, self.min_price, self.max_price)
 
-        # Check for valid trade
+        # Generator profit (Sell price - cost generation)
         Hg = self.a * self.gen_power**2 + self.b * self.gen_power + self.c
-        profit = self.con_price - Hg
+        # self.profit = self.con_price - Hg
 
-        if profit >= self.threshold:
+        self.profit = - self.gen_power * 1/np.log(1+self.con_price) - Hg
+
+        # Check for valid trade
+        if self.profit >= self.threshold:
             generator_reward = 1
             consumer_reward = -1
             done = True

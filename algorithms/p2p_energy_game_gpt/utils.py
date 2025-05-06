@@ -8,8 +8,8 @@ from energy_market_env import EnergyMarketEnv
 from minimax_agent import MinimaxQAgent
 
 # Define the action sets directly
-GENERATOR_ACTIONS = [-0.1, 0.0, 0.1]  # Power adjustments
-CONSUMER_ACTIONS = [-1, 0, 1]          # Price adjustments
+# GENERATOR_ACTIONS = [-0.1, 0.0, 0.1]  # Power adjustments
+# CONSUMER_ACTIONS = [-1, 0, 1]          # Price adjustments
 
 def plot_rewards(rewards, title, window_size=10):
     episodes = np.arange(len(rewards))
@@ -18,37 +18,63 @@ def plot_rewards(rewards, title, window_size=10):
     plt.figure(figsize=(10, 5))
     plt.plot(episodes, rewards, label='Reward per Transaction', alpha=0.5)
     plt.plot(episodes[:len(smoothed_rewards)], smoothed_rewards, label=f'Moving Average (window={window_size})', color='red', linewidth=2)
-    plt.xlabel('Transactions')
+    plt.xlabel('Episodes')
     plt.ylabel('Reward')
     plt.title(title)
     plt.legend()
     plt.grid(True)
     plt.show()
 
-def evaluate_and_plot_transactions(agent_G, agent_C, gen_state, con_state,episodes=100):
-    env = EnergyMarketEnv(a=0.1, b=2, c=0, 
-                        init_gen_power=gen_state, init_con_price=con_state,
-                        min_power=0.1, max_power=0.5,
-                        min_price=1.0, max_price=5, 
-                        threshold=0)
+def evaluate_and_plot_transactions(agent_G, agent_C, kwargs, evaluate_param):
+    
+    total_steps = kwargs.get('total_steps', 100)
+    init_gen_power = kwargs.get('init_gen_power', 0.3)
+    init_con_price = kwargs.get('init_con_price', 2.0)
+    min_power = kwargs.get('min_power', 0.1)
+    max_power = kwargs.get('max_power', 0.5)
+    min_price = kwargs.get('min_price', 1.0)
+    max_price = kwargs.get('max_price', 5.0)
+    threshold = kwargs.get('threshold', 1)
+    gen_actions = kwargs.get('gen_actions', [-0.1, 0.0, 0.1])
+    con_actions = kwargs.get('con_actions', [-1, 0, 1])
+    a = kwargs.get('a', 0.1)
+    b = kwargs.get('b', 2)
+    c = kwargs.get('c', 0)
+
+    env = EnergyMarketEnv(a, b, c, 
+                        init_gen_power, init_con_price,
+                        min_power, max_power,
+                        min_price, max_price, 
+                        threshold)
+    
+    GENERATOR_ACTIONS = gen_actions  # Power adjustments
+    CONSUMER_ACTIONS = con_actions         # Price adjustments
+
     gen_states = []
     con_states = []
 
-    for _ in range(episodes):
+    gen_state, con_state = env.reset()
+    state = (gen_state, con_state)
+
+    for _ in range(total_steps):
         
 
-        action_G = agent_G.select_action((gen_state, con_state), evaluate=True)
+        action_G = agent_G.select_action(state, evaluate=evaluate_param)
         if agent_C is None:
             action_C = random.choice(CONSUMER_ACTIONS)
         else:
-            action_C = agent_C.select_action((gen_state, con_state), evaluate=True)
+            action_C = agent_C.select_action(state, evaluate=evaluate_param)
 
         next_state, reward, _ = env.step({'generator': action_G, 'consumer': action_C})
+
+        state = next_state
 
         gen_states.append(next_state[0])
         con_states.append(next_state[1])
 
-    steps_range = range(episodes)
+    print('Generator 10 last mean', np.mean(gen_states[-10:]))
+    print('Consummer 10 last mean', np.mean(con_states[-10:]))
+    steps_range = range(total_steps)
     plt.figure(figsize=(12, 6))
     plt.plot(steps_range, gen_states, label='Generator Power Offer (kW)', color='blue', marker='o')
     plt.plot(steps_range, con_states, label='Consumer Price Offer ($/kWh)', color='green', marker='x')
@@ -59,12 +85,30 @@ def evaluate_and_plot_transactions(agent_G, agent_C, gen_state, con_state,episod
     plt.grid(True)
     plt.show()
 
-def train_agent(mode='MR', total_steps=100000, eval_interval=1000):
-    env = EnergyMarketEnv( a=0.1, b=2, c=0, 
-                        init_gen_power=2, init_con_price=0.2,
-                        min_power=0.1, max_power=0.5,
-                        min_price=1.0, max_price=5, 
-                        threshold=0)
+def train_agent(mode, kwargs):
+    total_steps = kwargs.get('total_steps', 10000)
+    eval_interval = kwargs.get('eval_interval', 100)
+    init_gen_power = kwargs.get('init_gen_power', 0.3)
+    init_con_price = kwargs.get('init_con_price', 2.0)
+    min_power = kwargs.get('min_power', 0.1)
+    max_power = kwargs.get('max_power', 0.5)
+    min_price = kwargs.get('min_price', 1.0)
+    max_price = kwargs.get('max_price', 5.0)
+    threshold = kwargs.get('threshold', 1)
+    gen_actions = kwargs.get('gen_actions', [-0.1, 0.0, 0.1])
+    con_actions = kwargs.get('con_actions', [-1, 0, 1])
+    a = kwargs.get('a', 0.1)
+    b = kwargs.get('b', 2)
+    c = kwargs.get('c', 0)
+    
+    GENERATOR_ACTIONS = gen_actions  # Power adjustments
+    CONSUMER_ACTIONS = con_actions         # Price adjustments
+
+    env = EnergyMarketEnv( a, b, c, 
+                        init_gen_power, init_con_price,
+                        min_power, max_power,
+                        min_price, max_price, 
+                        threshold)
 
     agent_G = MinimaxQAgent(player_id='G', actions=GENERATOR_ACTIONS)
 
@@ -81,38 +125,46 @@ def train_agent(mode='MR', total_steps=100000, eval_interval=1000):
     step_count = 0
     cumulative_reward = 0
     reward_history = []
+    profit_history = []
 
     with tqdm(total=total_steps, desc=f"Training Mode: {mode}") as pbar:
         gen_state, con_state = env.reset()
 
+        state = (gen_state, con_state)
+
         while step_count < total_steps:
             
-            action_G = agent_G.select_action((gen_state, con_state))
+            action_G = agent_G.select_action(state)
             if agent_C is None:
                 action_C = random.choice(CONSUMER_ACTIONS)
             else:
-                action_C = agent_C.select_action((gen_state, con_state))
+                action_C = agent_C.select_action(state)
 
             actions_dict = {'generator': action_G, 'consumer': action_C}
 
             next_state, reward, done = env.step(actions_dict)
 
-            agent_G.update((gen_state, con_state), action_G, action_C, reward['generator'], next_state)
+            agent_G.update(state, action_G, action_C, reward['generator'], next_state)
             if mode == 'MM':
-                agent_C.update((gen_state, con_state), action_C, action_G, reward['consumer'], next_state)
+                agent_C.update(state, action_C, action_G, reward['consumer'], next_state)
 
             cumulative_reward += reward['generator']
             step_count += 1
             pbar.update(1)
 
             if done:
+                profit_history.append([env.profit,step_count, state])
                 gen_state, con_state = env.reset()
+                state = (gen_state, con_state)
+
+            state = next_state
 
             if step_count % eval_interval == 0:
                 reward_history.append(cumulative_reward)
                 cumulative_reward = 0
                 pbar.set_postfix(games_played=step_count)
 
+    plot_rewards(reward_history, title=f'Rewards (MM)', window_size=10)
 
 
-    return agent_G, agent_C, reward_history
+    return agent_G, agent_C, reward_history, profit_history

@@ -13,9 +13,14 @@ class MinimaxQAgent:
         self.decay = 10 ** (np.log10(0.01) / total_steps)
         self.q_values = {}  # (state, a1, a2) -> value
         self.v_values = {}  # state -> value
+        self.pi_values = {}  # Dictionary to store pi[(state, action)] = probability
 
     def get_q(self, state, a1, a2):
         return self.q_values.get((state, a1, a2), 1)
+    
+    def get_pi(self, state):
+        n_actions = len(self.actions)
+        return self.pi_values.get((state), 1/n_actions*np.ones(n_actions))
 
     def get_state_key(self, state):
         return tuple(state)
@@ -23,9 +28,11 @@ class MinimaxQAgent:
     def select_action(self, state, evaluate=False):
         if not evaluate and random.random() < self.epsilon:
             return random.choice(self.actions)
-        
-        pi = self.solve_minimax_policy(state)
-        return random.choices(self.actions, weights=pi, k=1)[0]
+        elif(not evaluate):
+            self.pi_values[state] = self.solve_minimax_policy(state)
+            return random.choices(self.actions, weights=self.pi_values[state], k=1)[0]
+        elif(evaluate):
+            return random.choices(self.actions, weights=self.get_pi(state), k=1)[0]
 
 
     def solve_minimax_policy(self, state):
