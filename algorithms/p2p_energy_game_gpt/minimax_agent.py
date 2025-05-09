@@ -3,10 +3,11 @@ import random
 from scipy.optimize import linprog
 
 class MinimaxQAgent:
-    def __init__(self, player_id, actions, alpha=1.0, gamma=0.9, epsilon=0.1, total_steps = 10e6):
+    def __init__(self, player_id, actions, opponent_actions, alpha=1.0, gamma=0.9, epsilon=0.1, total_steps = 10e6):
         self.player_id = player_id
         self.opponent_id = 'C' if player_id == 'G' else 'G'
         self.actions = actions
+        self.opponent_actions = opponent_actions
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -43,7 +44,7 @@ class MinimaxQAgent:
         c = [0] * n + [-1]  # We maximize v (the value of the game)
         A = []
         b = []
-        for j, a2 in enumerate(self.actions):
+        for j, a2 in enumerate(self.opponent_actions):
             row = [-self.get_q(state_key, a1, a2) for a1 in self.actions]
             row.append(1)  # coefficient for v
             A.append(row)

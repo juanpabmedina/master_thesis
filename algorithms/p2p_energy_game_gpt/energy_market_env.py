@@ -1,11 +1,13 @@
 import numpy as np
+import random 
 
 class EnergyMarketEnv:
     def __init__(self, a=0.1, b=2, c=0, 
                  init_gen_power=10, init_con_price=1,
                  min_power=0.1, max_power=0.5,
                  min_price=1.0, max_price=5, 
-                 threshold=0.0):
+                 threshold=0.0,
+                 agent_id = 'G'):
         """
         Initialize the Energy Market Environment.
         
@@ -18,17 +20,21 @@ class EnergyMarketEnv:
             min_power, max_power: Generator power bounds.
             min_price, max_price: Consumer price bounds.
         """
+        self.agent_id = agent_id
+
         self.a = a
         self.b = b
         self.c = c
 
-        self.init_gen_power = init_gen_power
-        self.init_con_price = init_con_price
+
         
         self.min_power = min_power
         self.max_power = max_power
         self.min_price = min_price
         self.max_price = max_price
+
+        self.init_gen_power = round(random.uniform(min_power, max_power), 1)
+        self.init_con_price = round(random.uniform(min_price, max_price), 1)
 
         self.threshold = threshold
         
@@ -36,8 +42,8 @@ class EnergyMarketEnv:
 
     def reset(self):
         """Resets the environment to the initial state."""
-        self.gen_power = self.init_gen_power
-        self.con_price = self.init_con_price
+        self.gen_power = round(random.uniform(self.min_power, self.max_power), 1)
+        self.con_price = round(random.uniform(self.min_price, self.max_price), 1)
         return (self.gen_power, self.con_price)
     
     def is_trade_valid(self, threshold=0.0):
@@ -60,12 +66,18 @@ class EnergyMarketEnv:
         Hg = self.a * self.gen_power**2 + self.b * self.gen_power + self.c
         # self.profit = self.con_price - Hg
 
-        self.profit = - self.gen_power * 1/np.log(1+self.con_price) - Hg
+
+        self.gen_profit = self.gen_power * self.con_price - Hg
+        self.con_profit = self.gen_power * (1/np.log(1+self.con_price))
 
         # Check for valid trade
-        if self.profit >= self.threshold:
+        if self.agent_id == 'G' and self.gen_profit >= self.threshold:
             generator_reward = 1
             consumer_reward = -1
+            done = True
+        elif self.agent_id == 'C' and self.con_profit >= self.threshold:
+            generator_reward = -1
+            consumer_reward = 1
             done = True
         else:
             generator_reward = 0.0
