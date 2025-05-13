@@ -3,9 +3,7 @@ import random
 from scipy.optimize import linprog
 
 class MinimaxQAgent:
-    def __init__(self, player_id, actions, opponent_actions, alpha=1.0, gamma=0.9, epsilon=0.1, total_steps = 10e6):
-        self.player_id = player_id
-        self.opponent_id = 'C' if player_id == 'G' else 'G'
+    def __init__(self, actions, opponent_actions, alpha=1.0, gamma=0.9, epsilon=0.1, total_steps = 10e6):
         self.actions = actions
         self.opponent_actions = opponent_actions
         self.alpha = alpha

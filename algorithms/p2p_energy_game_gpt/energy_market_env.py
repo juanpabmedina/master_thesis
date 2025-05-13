@@ -6,8 +6,8 @@ class EnergyMarketEnv:
                  init_gen_power=10, init_con_price=1,
                  min_power=0.1, max_power=0.5,
                  min_price=1.0, max_price=5, 
-                 threshold=0.0,
-                 agent_id = 'G'):
+                 gen_threshold=0.0, con_threshold = 0.0,
+                 agent_id= None):
         """
         Initialize the Energy Market Environment.
         
@@ -36,7 +36,8 @@ class EnergyMarketEnv:
         self.init_gen_power = round(random.uniform(min_power, max_power), 1)
         self.init_con_price = round(random.uniform(min_price, max_price), 1)
 
-        self.threshold = threshold
+        self.gen_threshold = gen_threshold
+        self.con_threshold = con_threshold
         
         self.reset()
 
@@ -51,10 +52,15 @@ class EnergyMarketEnv:
         return self.gen_power * self.con_price - Hg >= threshold
 
 
-    def step(self, actions):
-        # Apply actions
-        gen_action = actions['generator']
-        con_action = actions['consumer']
+    def step(self, actions, agent_id):
+
+        if agent_id == 'G':
+            # Apply actions
+            gen_action = actions['G']
+            con_action = actions['C']
+        else:
+            gen_action = actions['C']
+            con_action = actions['G']
 
         self.gen_power += gen_action 
         self.con_price += con_action
@@ -71,11 +77,11 @@ class EnergyMarketEnv:
         self.con_profit = self.gen_power * (1/np.log(1+self.con_price))
 
         # Check for valid trade
-        if self.agent_id == 'G' and self.gen_profit >= self.threshold:
+        if self.agent_id == 'G' and self.gen_profit >= self.gen_threshold:
             generator_reward = 1
             consumer_reward = -1
             done = True
-        elif self.agent_id == 'C' and self.con_profit >= self.threshold:
+        elif self.agent_id == 'C' and self.con_profit >= self.con_threshold:
             generator_reward = -1
             consumer_reward = 1
             done = True
@@ -85,8 +91,8 @@ class EnergyMarketEnv:
             done = False
 
         rewards = {
-            'generator': generator_reward,
-            'consumer': consumer_reward
+            'G': generator_reward,
+            'C': consumer_reward
         }
 
         next_state = (self.gen_power, self.con_price)
