@@ -3,7 +3,6 @@ import random
 
 class EnergyMarketEnv:
     def __init__(self, a=0.1, b=2, c=0, 
-                 init_gen_power=10, init_con_price=1,
                  min_power=0.1, max_power=0.5,
                  min_price=1.0, max_price=5, 
                  gen_threshold=0.0, con_threshold = 0.0,
@@ -33,9 +32,6 @@ class EnergyMarketEnv:
         self.min_price = min_price
         self.max_price = max_price
 
-        self.init_gen_power = round(random.uniform(min_power, max_power), 1)
-        self.init_con_price = round(random.uniform(min_price, max_price), 1)
-
         self.gen_threshold = gen_threshold
         self.con_threshold = con_threshold
         
@@ -46,21 +42,13 @@ class EnergyMarketEnv:
         self.gen_power = round(random.uniform(self.min_power, self.max_power), 1)
         self.con_price = round(random.uniform(self.min_price, self.max_price), 1)
         return (self.gen_power, self.con_price)
-    
-    def is_trade_valid(self, threshold=0.0):
-        Hg = self.a * self.gen_power**2 + self.b * self.gen_power + self.c
-        return self.gen_power * self.con_price - Hg >= threshold
 
 
     def step(self, actions, agent_id):
 
-        if agent_id == 'G':
-            # Apply actions
-            gen_action = actions['G']
-            con_action = actions['C']
-        else:
-            gen_action = actions['C']
-            con_action = actions['G']
+
+        gen_action = actions['G']
+        con_action = actions['C']
 
         self.gen_power += gen_action 
         self.con_price += con_action
@@ -77,11 +65,11 @@ class EnergyMarketEnv:
         self.con_profit = self.gen_power * (1/np.log(1+self.con_price))
 
         # Check for valid trade
-        if self.agent_id == 'G' and self.gen_profit >= self.gen_threshold:
+        if self.gen_power <= self.gen_threshold:
             generator_reward = 1
             consumer_reward = -1
             done = True
-        elif self.agent_id == 'C' and self.con_profit >= self.con_threshold:
+        elif self.con_profit >= self.con_threshold:
             generator_reward = -1
             consumer_reward = 1
             done = True

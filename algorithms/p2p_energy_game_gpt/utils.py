@@ -34,7 +34,8 @@ def evaluate(agent1, agent2, kwargs, plot=True):
     max_power = kwargs.get('max_power', 0.5)
     min_price = kwargs.get('min_price', 1.0)
     max_price = kwargs.get('max_price', 5.0)
-    threshold = kwargs.get('threshold', 1)
+    gen_threshold = kwargs.get('gen_threshold', 1)
+    con_threshold = kwargs.get('con_threshold', 1)
     agent1_actions = kwargs.get('agent1_actions', [-0.1, 0.0, 0.1])
     agent2_actions = kwargs.get('agent2_actions', [-1, 0, 1])
     a = kwargs.get('a', 0.1)
@@ -43,11 +44,10 @@ def evaluate(agent1, agent2, kwargs, plot=True):
     agent1_id = kwargs.get('agent1_id', 'G')
     agent2_id = kwargs.get('agent2_id', 'C')
 
-    env = EnergyMarketEnv( a, b, c, 
-                        init_gen_power, init_con_price,
+    env = EnergyMarketEnv( a, b, c,
                         min_power, max_power,
                         min_price, max_price, 
-                        threshold,
+                        gen_threshold, con_threshold,
                         agent1_id)
 
     gen_states = []
@@ -113,7 +113,6 @@ def train(mode, kwargs):
     agent2_id = kwargs.get('agent2_id', 'C')
 
     env = EnergyMarketEnv( a, b, c, 
-                        init_gen_power, init_con_price,
                         min_power, max_power,
                         min_price, max_price, 
                         gen_threshold, con_threshold,
