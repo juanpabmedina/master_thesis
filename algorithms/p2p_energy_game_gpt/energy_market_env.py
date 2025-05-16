@@ -65,7 +65,7 @@ class EnergyMarketEnv:
         self.con_profit = self.gen_power * (1/np.log(1+self.con_price))
 
         # Check for valid trade
-        if self.gen_power <= self.gen_threshold:
+        if self.gen_profit >= self.gen_threshold:
             generator_reward = 1
             consumer_reward = -1
             done = True
