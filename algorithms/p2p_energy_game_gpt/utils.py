@@ -27,28 +27,21 @@ def plot_rewards(rewards, title, window_size=10):
 
 def evaluate(agent1, agent2, kwargs, plot=True):
     total_steps = kwargs.get('total_steps', 10000)
-    eval_interval = kwargs.get('eval_interval', 100)
-    init_gen_power = kwargs.get('init_gen_power', 0.3)
-    init_con_price = kwargs.get('init_con_price', 2.0)
     min_power = kwargs.get('min_power', 0.1)
     max_power = kwargs.get('max_power', 0.5)
     min_price = kwargs.get('min_price', 1.0)
     max_price = kwargs.get('max_price', 5.0)
     gen_threshold = kwargs.get('gen_threshold', 1)
     con_threshold = kwargs.get('con_threshold', 1)
-    agent1_actions = kwargs.get('agent1_actions', [-0.1, 0.0, 0.1])
-    agent2_actions = kwargs.get('agent2_actions', [-1, 0, 1])
+    agent2_id = kwargs.get('agent2_id', 'C')
     a = kwargs.get('a', 0.1)
     b = kwargs.get('b', 2)
     c = kwargs.get('c', 0)
-    agent1_id = kwargs.get('agent1_id', 'G')
-    agent2_id = kwargs.get('agent2_id', 'C')
 
     env = EnergyMarketEnv( a, b, c,
                         min_power, max_power,
                         min_price, max_price, 
-                        gen_threshold, con_threshold,
-                        agent1_id)
+                        gen_threshold, con_threshold)
 
     gen_states = []
     con_states = []
@@ -65,13 +58,15 @@ def evaluate(agent1, agent2, kwargs, plot=True):
 
         a1 = agent1.select_action(state, evaluate=True)
         if agent2 is None:
-            a2 = random.choice(agent2_actions)
+            a2 = random.choice(agent1.opponent_actions)
+            actions_dict = {agent1.id: a1, agent2_id: a2}
         else:
             a2 = agent2.select_action(state, evaluate=True)
+            actions_dict = {agent1.id: a1, agent2.id: a2}
 
-        actions_dict = {agent1_id: a1, agent2_id: a2}
+        
 
-        next_state, _, _ = env.step(actions_dict, agent1_id)
+        next_state, _, _ = env.step(actions_dict)
 
         state = next_state
 
@@ -93,7 +88,7 @@ def evaluate(agent1, agent2, kwargs, plot=True):
         return np.mean(gen_states[-10:]), np.mean(con_states[-10:])
 
 
-def train(mode, kwargs):
+def train(mode, kwargs, train_agent = None):
     total_steps = kwargs.get('total_steps', 10000)
     eval_interval = kwargs.get('eval_interval', 100)
     init_gen_power = kwargs.get('init_gen_power', 0.3)
@@ -115,18 +110,16 @@ def train(mode, kwargs):
     env = EnergyMarketEnv( a, b, c, 
                         min_power, max_power,
                         min_price, max_price, 
-                        gen_threshold, con_threshold,
-                        agent1_id)
+                        gen_threshold, con_threshold)
 
-    agent1 = MinimaxQAgent(actions=agent1_actions, opponent_actions=agent2_actions)
+    agent1 = MinimaxQAgent(id= agent1_id, actions=agent1_actions, opponent_actions=agent2_actions)
 
     if mode == 'MR':
         agent2 = None  # Consumer acts randomly
     elif mode == 'MM':
-        agent2 = MinimaxQAgent(actions=agent2_actions, opponent_actions=agent1_actions)
+        agent2 = MinimaxQAgent(id= agent2_id,actions=agent2_actions, opponent_actions=agent1_actions)
     elif mode == 'MC':
-        with open('trained_challenger.pkl', 'rb') as f:
-            agent2 = pickle.load(f)
+        agent2 = train_agent
     else:
         raise ValueError("Mode must be 'MR', 'MM', or 'MC'.")
 
@@ -147,25 +140,29 @@ def train(mode, kwargs):
         while step_count < total_steps:
             
             a1 = agent1.select_action(state)
-            if agent2 is None:
+            if mode == 'MR':
                 a2 = random.choice(agent2_actions)
-            else:
+                actions_dict = {agent1.id: a1, agent2_id: a2}
+            elif mode == 'MM':
                 a2 = agent2.select_action(state)
+                actions_dict = {agent1.id: a1, agent2.id: a2}
+            elif mode == 'MC':
+                a2 = agent2.select_action(state, evaluate=True)
+                actions_dict = {agent1.id: a1, agent2.id: a2}
+           
 
-            actions_dict = {agent1_id: a1, agent2_id: a2}
+            next_state, reward, done = env.step(actions_dict) ##### BUUUUG ARREGLAR ESTO -> SI NO LE DOY EL ID NO ENTRENA BIEN
 
-            next_state, reward, done = env.step(actions_dict, agent1_id) ##### BUUUUG ARREGLAR ESTO -> SI NO LE DOY EL ID NO ENTRENA BIEN
-
-            agent1.update(state, a1, a2, reward[agent1_id], next_state)
+            agent1.update(state, a1, a2, reward[agent1.id], next_state)
             if mode == 'MM':
-                agent2.update(state, a2, a1, reward[agent2_id], next_state)
+                agent2.update(state, a2, a1, reward[agent2.id], next_state)
 
-            cumulative_reward += reward[agent1_id]
+            cumulative_reward += reward[agent1.id]
             step_count += 1
             pbar.update(1)
 
             if done:
-                if reward[agent1_id] == 1:
+                if reward[agent1.id] == 1:
                     ag1_win += 1
                 else:
                     ag2_win += 1

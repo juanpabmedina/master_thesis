@@ -5,8 +5,7 @@ class EnergyMarketEnv:
     def __init__(self, a=0.1, b=2, c=0, 
                  min_power=0.1, max_power=0.5,
                  min_price=1.0, max_price=5, 
-                 gen_threshold=0.0, con_threshold = 0.0,
-                 agent_id= None):
+                 gen_threshold=0.0, con_threshold = 0.0):
         """
         Initialize the Energy Market Environment.
         
@@ -19,7 +18,6 @@ class EnergyMarketEnv:
             min_power, max_power: Generator power bounds.
             min_price, max_price: Consumer price bounds.
         """
-        self.agent_id = agent_id
 
         self.a = a
         self.b = b
@@ -44,7 +42,7 @@ class EnergyMarketEnv:
         return (self.gen_power, self.con_price)
 
 
-    def step(self, actions, agent_id):
+    def step(self, actions):
 
 
         gen_action = actions['G']
