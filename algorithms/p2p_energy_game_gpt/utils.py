@@ -151,7 +151,7 @@ def train(mode, kwargs, train_agent = None):
                 actions_dict = {agent1.id: a1, agent2.id: a2}
            
 
-            next_state, reward, done = env.step(actions_dict) ##### BUUUUG ARREGLAR ESTO -> SI NO LE DOY EL ID NO ENTRENA BIEN
+            next_state, reward, done = env.step(actions_dict)
 
             agent1.update(state, a1, a2, reward[agent1.id], next_state)
             if mode == 'MM':
