@@ -1,0 +1,42 @@
+Failure # 1 (occurred at 2025-06-11_16-31-25)
+Traceback (most recent call last):
+  File "/opt/conda/lib/python3.8/site-packages/ray/tune/trial_runner.py", line 890, in _process_trial
+    results = self.trial_executor.fetch_result(trial)
+  File "/opt/conda/lib/python3.8/site-packages/ray/tune/ray_trial_executor.py", line 788, in fetch_result
+    result = ray.get(trial_future[0], timeout=DEFAULT_GET_TIMEOUT)
+  File "/opt/conda/lib/python3.8/site-packages/ray/_private/client_mode_hook.py", line 105, in wrapper
+    return func(*args, **kwargs)
+  File "/opt/conda/lib/python3.8/site-packages/ray/worker.py", line 1627, in get
+    raise value
+ray.exceptions.RayActorError: The actor died because of an error raised in its creation task, [36mray::MAPPOTrainer.__init__()[39m (pid=147, ip=172.17.0.2)
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/agents/trainer_template.py", line 137, in __init__
+    Trainer.__init__(self, config, env, logger_creator)
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/agents/trainer.py", line 623, in __init__
+    super().__init__(config, logger_creator)
+  File "/opt/conda/lib/python3.8/site-packages/ray/tune/trainable.py", line 107, in __init__
+    self.setup(copy.deepcopy(self.config))
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/agents/trainer_template.py", line 147, in setup
+    super().setup(config)
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/agents/trainer.py", line 776, in setup
+    self._init(self.config, self.env_creator)
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/agents/trainer_template.py", line 171, in _init
+    self.workers = self._make_workers(
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/agents/trainer.py", line 858, in _make_workers
+    return WorkerSet(
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/evaluation/worker_set.py", line 110, in __init__
+    self._local_worker = self._make_worker(
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/evaluation/worker_set.py", line 406, in _make_worker
+    worker = cls(
+  File "/opt/conda/lib/python3.8/site-packages/ray/rllib/evaluation/rollout_worker.py", line 570, in __init__
+    raise RuntimeError(
+RuntimeError: Found 0 GPUs on your machine (GPU devices found: [])! If your machine
+    does not have any GPUs, you should set the config keys `num_gpus` and
+    `num_gpus_per_worker` to 0 (they may be set to 1 by default for your
+    particular RL algorithm).
+To change the config for the `rllib train|rollout` command, use
+  `--config={'[key]': '[value]'}` on the command line.
+To change the config for `tune.run()` in a script: Modify the python dict
+  passed to `tune.run(config=[...])`.
+To change the config for an RLlib Trainer instance: Modify the python dict
+  passed to the Trainer's constructor, e.g. `PPOTrainer(config=[...])`.
+
