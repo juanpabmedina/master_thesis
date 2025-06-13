@@ -3,3 +3,5 @@ marl_venv/
 __pycache__/
 MARLlib/
 .MARLlib/
+exp_results/
+examples/

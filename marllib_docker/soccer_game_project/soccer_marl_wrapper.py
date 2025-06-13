@@ -23,6 +23,7 @@ policy_mapping_dict = {
 class SoccerMARLlibEnv(MultiAgentEnv):
     def __init__(self, env_config):
         # Create your env from your parallel_env factory
+        self.max_cycles = env_config.get("max_cycles", 500)  # default to 100 steps
         self.env = parallel_env()
         self.agents = self.env.possible_agents
         self.num_agents = len(self.agents)
@@ -34,15 +35,22 @@ class SoccerMARLlibEnv(MultiAgentEnv):
         self.action_space = self.env.action_space(self.agents[0])
 
     def reset(self):
+        self.current_step = 0
         obs = self.env.reset()
         return {agent: {"obs": obs[agent]} for agent in self.agents}
 
     def step(self, action_dict):
+        self.current_step += 1
         actions = [action_dict[agent] for agent in self.agents]
         obs, rewards, dones, infos = self.env.step(actions)
         obs = {agent: {"obs": obs[agent]} for agent in self.agents}
         rewards = {agent: rewards[agent] for agent in self.agents}
-        dones = {"__all__": all(dones.values())}
+
+        # If internal step limit reached, end the episode
+        done_flag = all(dones.values()) or self.current_step >= self.max_cycles
+        dones = {agent: done_flag for agent in self.agents}
+        dones["__all__"] = done_flag
+        
         return obs, rewards, dones, infos
 
     def get_env_info(self):

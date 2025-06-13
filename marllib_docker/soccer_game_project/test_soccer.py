@@ -41,7 +41,7 @@ for step_count in range(100):
     # Print observations and rewards
     for agent in rewards:
         print(f"  Reward for {agent}: {rewards[agent]}")
-        print(f"  Observation: {observations[agent]}")
+        # print(f"  Observation: {observations[agent]}")
 
     # Render the environment
     env.render()
@@ -51,7 +51,7 @@ for step_count in range(100):
         print("\n=== Game Over ===")
         break
 
-    time.sleep(0.5)
+    # time.sleep(0.5)
 
 env.close()
 

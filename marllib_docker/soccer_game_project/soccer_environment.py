@@ -161,17 +161,17 @@ class parallel_env(ParallelEnv):
         rewards = {agent: 0 for agent in self.agents}
 
         # Goal condition: ball enters the G positions (column 0 or 6) in rows 1 or 2
-        if ball_holder == self.agents[0] and ball_pos[1] == 6 and ball_pos[0] in [1, 2]:
-            rewards[self.agents[0]] = 1
-            rewards[self.agents[1]] = -1
+        if ball_holder == self.agents[0] and ball_pos[1] == 0 and ball_pos[0] in [1, 2]:
+            rewards[self.agents[0]] = 100
+            rewards[self.agents[1]] = -10
             game_done = True
-        elif ball_holder == self.agents[1] and ball_pos[1] == 0 and ball_pos[0] in [1, 2]:
-            rewards[self.agents[0]] = -1
-            rewards[self.agents[1]] = 1
+        elif ball_holder == self.agents[1] and ball_pos[1] == 6 and ball_pos[0] in [1, 2]:
+            rewards[self.agents[0]] = -10
+            rewards[self.agents[1]] = 100
             game_done = True
         else:
-            rewards[self.agents[0]] = 0
-            rewards[self.agents[1]] = 0
+            rewards[self.agents[0]] = -0.1
+            rewards[self.agents[1]] = -0.1
             game_done = False
 
         dones = {agent: game_done for agent in self.agents}
@@ -181,6 +181,7 @@ class parallel_env(ParallelEnv):
         # still be an entry for each agent
         infos = {agent: {} for agent in self.agents}
 
+        self.scores = rewards
         self.dones = dones  # Optional but good
         if game_done:
             self.agents = []
@@ -266,8 +267,7 @@ class parallel_env(ParallelEnv):
         clear_output(wait=True)
         for row in grid:
             print(''.join(row))
-        # print(f"Scores: {self.scores}")
-        # print(f"Ball possession: {self.ball_possession}")
-        # print(f"Current agent: {self.agent_selection}")
-        # print()
+        print(f"Scores: {self.scores}")
+        print(f"Ball possession: {self.ball_possession}")
+        print()
         time.sleep(0.5)
