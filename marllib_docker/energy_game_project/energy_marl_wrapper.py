@@ -23,8 +23,20 @@ policy_mapping_dict = {
 class EnergyMARLlibEnv(MultiAgentEnv):
     def __init__(self, env_config):
         # Create your env from your parallel_env factory
-        self.max_cycles = env_config.get("max_cycles", 500)  # default to 100 steps
-        self.env = parallel_env()
+        self.max_cycles = env_config.get("max_cycles", 100)  # default to 100 steps
+        max_gen_power = env_config.get("max_gen_power", 1)  # default to 100 steps
+        min_gen_power = env_config.get("min_gen_power", 0.1)  # default to 100 steps
+        max_con_price = env_config.get("max_con_price", 1)  # default to 100 steps
+        min_con_price = env_config.get("min_con_price", 0.1)  # default to 100 steps
+        profit_threshold = env_config.get("profit_threshold", 500)  # default to 100 steps
+        max_steps = env_config.get("max_steps", 100)  # default to 100 steps
+
+        self.env = parallel_env(
+                max_gen_power, min_gen_power, 
+                max_con_price, min_con_price, 
+                profit_threshold, max_steps
+                )
+        
         self.agents = self.env.possible_agents
         self.num_agents = len(self.agents)
 

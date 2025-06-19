@@ -4,24 +4,25 @@ from pettingzoo.utils import wrappers, from_parallel
 from typing import Optional
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 
-def env():
-    """Entry point for creating the environment with standard PettingZoo wrappers"""
-    raw = parallel_env()
-    return wrappers.OrderEnforcingWrapper(
-        wrappers.AssertOutOfBoundsWrapper(
-            wrappers.CaptureStdoutWrapper(from_parallel(raw))
-        )
-    )
+# def env():
+#     """Entry point for creating the environment with standard PettingZoo wrappers"""
+#     raw = parallel_env()
+#     return wrappers.OrderEnforcingWrapper(
+#         wrappers.AssertOutOfBoundsWrapper(
+#             wrappers.CaptureStdoutWrapper(from_parallel(raw))
+#         )
+#     )
 
 
 class parallel_env(ParallelEnv):
     metadata = {'render.modes': ['human'], "name": "energy_market_v1"}
 
-    def __init__(self, max_gen_power: float = 5, min_gen_power: float = 0.1, 
-                 max_con_price: float = 5, min_con_price: float = 0.1, 
-                 profit_threshold: float = 10, max_steps: int = 100):
+    def __init__(self, max_gen_power, min_gen_power, 
+                 max_con_price, min_con_price, 
+                 profit_threshold, max_steps):
         """
         Initialize the Energy Market environment.
         
@@ -46,6 +47,10 @@ class parallel_env(ParallelEnv):
         self.profit_threshold = profit_threshold
         self.max_steps = max_steps
 
+        # Variable to plot 
+        self.cum_gen_power = []
+        self.cum_con_price = []
+
         # Agents
         self.possible_agents = ["generator", "consumer"]
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
@@ -56,7 +61,7 @@ class parallel_env(ParallelEnv):
         # Observation space: [own_value, opponent_value, own_profit, opponent_profit, step]
         self.observation_spaces = {
             agent: Box(
-                low=np.array([0.0, 0.0,]), 
+                low=np.array([-10.0, -10.0,]), 
                 high=np.array([10.0, 10.0]), 
                 shape=(2,), 
                 dtype=np.float32
@@ -92,6 +97,10 @@ class parallel_env(ParallelEnv):
         
         # Get initial observations
         observations = self.observe()
+
+        # Variable to plot 
+        self.cum_gen_power = []
+        self.cum_con_price = []
         
         return observations
 
@@ -189,16 +198,20 @@ class parallel_env(ParallelEnv):
         rewards = {"generator": 0.0, "consumer": 0.0}
         
         # Check if either agent reached profit threshold
-        if self.gen_profit > self.profit_threshold:
-            rewards["generator"] = 100.0
-            rewards["consumer"] = -10.0
-        elif self.con_profit > self.profit_threshold:
-            rewards["generator"] = -10.0
-            rewards["consumer"] = 100.0
-        else:
-            # Small negative reward to encourage efficiency
-            rewards["generator"] = -0.01
-            rewards["consumer"] = -0.01
+        # if self.gen_profit > self.profit_threshold:
+        #     rewards["generator"] = 100.0
+        #     rewards["consumer"] = -10.0
+        # elif self.con_profit > self.profit_threshold:
+        #     rewards["generator"] = -10.0
+        #     rewards["consumer"] = 100.0
+        # else:
+        #     # Small negative reward to encourage efficiency
+        #     rewards["generator"] = -0.01
+        #     rewards["consumer"] = -0.01
+
+        rewards["generator"] = self.gen_profit
+        rewards["consumer"] = self.con_profit 
+        
         
         return rewards
 
@@ -209,7 +222,7 @@ class parallel_env(ParallelEnv):
                           self.con_profit > self.profit_threshold)
         max_steps_reached = self.step_count >= self.max_steps
         
-        terminated = profit_achieved or max_steps_reached
+        terminated = max_steps_reached
         
         return {"generator": terminated, "consumer": terminated}
 
@@ -251,14 +264,31 @@ class parallel_env(ParallelEnv):
             self.print_state()
 
     def print_state(self):
-        """Print current state of the energy market"""
-        print(f"\n=== Energy Market State (Step {self.step_count}) ===")
-        print(f"Generator Power: {self._generator_power:.3f}")
-        print(f"Consumer Price: {self._consumer_price:.3f}")
-        print(f"Generator Profit: {self.gen_profit:.3f}")
-        print(f"Consumer Profit: {self.con_profit:.3f}")
-        print(f"Profit Threshold: {self.profit_threshold}")
-        print("=" * 45)
+        self.cum_gen_power.append(self._generator_power)
+        self.cum_con_price.append(self._consumer_price)
+
+        print("=========== CURRENT STATE ===========")
+        print("Generator: ", self._generator_power)
+        print("Consumer: ", self._consumer_price)
+        print("Step: ", self.step_count)
+        print(f"Min: {self.min_gen_power, self.min_con_price} - Max: {self.max_gen_power, self.max_con_price}")
+        print("=====================================")
+
+        if self.step_count == 25:
+            """Print current state of the energy market"""
+            # Create and save the plot
+            plt.figure(figsize=(10, 6))
+            plt.plot(self.cum_gen_power, label='Generator Power (P)', marker='o')
+            plt.plot(self.cum_con_price, label='Consumer Price ($)', marker='s')
+            plt.xlabel('Time Step')
+            plt.ylabel('Value')
+            plt.title('Generator Power and Consumer Price Over Time')
+            plt.legend()
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig('market_dynamics.png')  # Save figure as PNG
+            plt.close()
+
 
     def close(self):
         """Clean up environment resources"""

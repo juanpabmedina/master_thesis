@@ -5,3 +5,5 @@ MARLlib/
 .MARLlib/
 exp_results/
 examples/
+evaluated_policies/
+trained_policies/

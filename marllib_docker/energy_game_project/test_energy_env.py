@@ -1,4 +1,4 @@
-from energy_market_env import env
+# from energy_market_env import env
 from energy_market_env import parallel_env
 from pettingzoo.test import parallel_api_test
 from pettingzoo.test import api_test
@@ -6,12 +6,32 @@ import time
 
 
 # Create environment instances for testing
-aec_energy_env = env()
-parallel_energy_env = parallel_env()
+env_config = {
+        # Add your soccer environment specific parameters here
+        "max_cycles": 100,             # Episode length
+        # Add other parameters your soccer env needs
+    }
 
-# Run PettingZoo API tests
-print("=== Running AEC API Test ===")
-api_test(aec_energy_env, num_cycles=10, verbose_progress=True)
+max_cycles = env_config.get("max_cycles", 100)  # default to 100 steps
+max_gen_power = env_config.get("max_gen_power", 1)  # default to 100 steps
+min_gen_power = env_config.get("min_gen_power", 0.1)  # default to 100 steps
+max_con_price = env_config.get("max_con_price", 1)  # default to 100 steps
+min_con_price = env_config.get("min_con_price", 0.1)  # default to 100 steps
+profit_threshold = env_config.get("profit_threshold", 500)  # default to 100 steps
+max_steps = env_config.get("max_steps", 100)  # default to 100 steps
+
+parallel_energy_env = parallel_env(
+        max_gen_power, min_gen_power, 
+        max_con_price, min_con_price, 
+        profit_threshold, max_steps
+        )
+
+
+# aec_energy_env = env()
+
+# # Run PettingZoo API tests
+# print("=== Running AEC API Test ===")
+# api_test(aec_energy_env, num_cycles=10, verbose_progress=True)
 
 print("\n=== Running Parallel API Test ===")
 parallel_api_test(parallel_energy_env, num_cycles=10)
@@ -23,7 +43,7 @@ print("\n=== API Tests Completed Successfully ===")
 ACTIONS = ['DECREASE', 'STAY', 'INCREASE']
 
 # Initialize environment for manual testing
-env_instance = parallel_env()
+env_instance = parallel_energy_env
 observations = env_instance.reset()
 
 print("\n=== Starting Parallel Energy Market Game ===")
@@ -102,10 +122,22 @@ def test_energy_market_scenarios():
     
     # Test 1: High generator power, low consumer price
     print("\n--- Test 1: High Power, Low Price Scenario ---")
-    env_test = parallel_env(profit_threshold=5)
+
+    env_config = {
+        'profit_threshold': 5,    
+    }
+
+    profit_threshold = env_config.get("profit_threshold", 500) 
+
+    env_test = parallel_env(
+        max_gen_power, min_gen_power, 
+        max_con_price, min_con_price, 
+        profit_threshold, max_steps
+        )
+    
     env_test.reset()
-    env_test._generator_power = 4.5
-    env_test._consumer_price = 1.0
+    env_test._generator_power = 1
+    env_test._consumer_price = 0.1
     env_test._update_profits()
     
     print(f"Generator Power: {env_test._generator_power}")
@@ -115,8 +147,8 @@ def test_energy_market_scenarios():
     
     # Test 2: Low generator power, high consumer price  
     print("\n--- Test 2: Low Power, High Price Scenario ---")
-    env_test._generator_power = 1.0
-    env_test._consumer_price = 4.5
+    env_test._generator_power = 0.1
+    env_test._consumer_price = 1
     env_test._update_profits()
     
     print(f"Generator Power: {env_test._generator_power}")
@@ -147,11 +179,22 @@ def performance_test():
     """Test environment performance"""
     print("\n=== Performance Test ===")
     
-    env_perf = parallel_env(max_steps=1000)
+    env_config = {
+        'max_steps': 1000,    
+    }
+
+    max_steps = env_config.get("max_steps", 500) 
+
+    env_perf = parallel_env(
+        max_gen_power, min_gen_power, 
+        max_con_price, min_con_price, 
+        profit_threshold, max_steps
+        )
+    
     start_time = time.time()
     
     total_steps = 0
-    num_episodes = 10
+    num_episodes = 2
     
     for episode in range(num_episodes):
         obs = env_perf.reset()
@@ -168,6 +211,8 @@ def performance_test():
             done = all(dones.values())
             episode_steps += 1
             total_steps += 1
+
+            env_perf.render()
     
     end_time = time.time()
     duration = end_time - start_time
