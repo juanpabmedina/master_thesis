@@ -1,12 +1,12 @@
 from marllib import marl
 from utils import clean_folder, rename_and_move_result, copy_config_file
-import energy_marl_wrapper  # Make sure this registers your env in ENV_REGISTRY
+import energy_marl_wrapper2  # Make sure this registers your env in ENV_REGISTRY
 import os 
 
 FOLDER_TO_CLEAN = 'exp_results'
-TRAINING_OUTPUT_DIR = 'exp_results/maa2c_mlp_p2p'  # where results are generated
-DESTINATION_ROOT = 'trained_policies/maa2c_mlp_p2p'  # Where experiments are stored
-EXP_NAME = 'p2p_market_case2'  # Change this to your experiment name
+TRAINING_OUTPUT_DIR = 'exp_results/maa2c_mlp_energy_market'  # where results are generated
+DESTINATION_ROOT = 'trained_policies/maa2c_mlp_energy_market'  # Where experiments are stored
+EXP_NAME = 'energy_market_case4_ma'  # Change this to your experiment name
 CONFIG_FILE = 'energy.yaml'
 CONFIG_DIR = 'config/env_config'
 
@@ -15,16 +15,16 @@ copy_config_file(CONFIG_FILE, config_dir=CONFIG_DIR)
 
 
 # Step 1: Create your custom environment
-env = marl.make_env(environment_name="energy", map_name="p2p")
+env = marl.make_env(environment_name="energy", map_name="energy_market")
 
 #Step 2: Initialize the algorithm and load hyperparameters
-maa2c = marl.algos.maa2c(hyperparam_source="common")
+algorithm = marl.algos.maa2c(hyperparam_source="common")
 
 #customize model
-model = marl.build_model(env, maa2c, {"core_arch": "mlp", "encode_layer": "128-128"})
+model = marl.build_model(env, algorithm, {"core_arch": "mlp", "encode_layer": "128-128"})
 
 #start learning
-maa2c.fit(env, 
+algorithm.fit(env, 
           model, 
           stop={'episode_reward_mean': 2000, 'timesteps_total': 200000}, 
           local_mode=False, 

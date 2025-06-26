@@ -5,6 +5,10 @@ from typing import Optional
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import csv
+import os
+from datetime import datetime
+
 
 
 # def env():
@@ -51,6 +55,12 @@ class parallel_env(ParallelEnv):
         self.cum_gen_power = []
         self.cum_con_price = []
 
+        # Save printed states
+        self.csv_initialized = False
+        self.csv_file = f"market_log_all_episodes_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv"
+
+        self.iter_count = 0
+
         # Agents
         self.possible_agents = ["generator", "consumer"]
         self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
@@ -91,6 +101,8 @@ class parallel_env(ParallelEnv):
         
         # Initialize step counter
         self.step_count = 0
+
+        self.iter_count += 1
         
         # Calculate initial profits
         self._update_profits()
@@ -196,18 +208,6 @@ class parallel_env(ParallelEnv):
     def _calculate_rewards(self):
         """Calculate rewards for both agents"""
         rewards = {"generator": 0.0, "consumer": 0.0}
-        
-        # Check if either agent reached profit threshold
-        # if self.gen_profit > self.profit_threshold:
-        #     rewards["generator"] = 100.0
-        #     rewards["consumer"] = -10.0
-        # elif self.con_profit > self.profit_threshold:
-        #     rewards["generator"] = -10.0
-        #     rewards["consumer"] = 100.0
-        # else:
-        #     # Small negative reward to encourage efficiency
-        #     rewards["generator"] = -0.01
-        #     rewards["consumer"] = -0.01
 
         rewards["generator"] = self.gen_profit
         rewards["consumer"] = self.con_profit 
@@ -257,6 +257,16 @@ class parallel_env(ParallelEnv):
         
         print(f"Warning: Could not format actions {actions} of type {type(actions)}")
         return {}
+    
+    def _init_csv_log(self):
+        if not self.csv_initialized:
+            with open(self.csv_file, mode='w', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=[
+                    'episode', 'step', 'generator_power', 'consumer_price',
+                    'generator_profit', 'consumer_profit'
+                ])
+                writer.writeheader()
+            self.csv_initialized = True
 
     def render(self, mode="human"):
         """Render the environment state"""
@@ -264,30 +274,48 @@ class parallel_env(ParallelEnv):
             self.print_state()
 
     def print_state(self):
-        self.cum_gen_power.append(self._generator_power)
-        self.cum_con_price.append(self._consumer_price)
+        # self.cum_gen_power.append(self._generator_power)
+        # self.cum_con_price.append(self._consumer_price)
 
-        print("=========== CURRENT STATE ===========")
-        print("Generator: ", self._generator_power)
-        print("Consumer: ", self._consumer_price)
-        print("Step: ", self.step_count)
-        print(f"Min: {self.min_gen_power, self.min_con_price} - Max: {self.max_gen_power, self.max_con_price}")
-        print("=====================================")
+        # print("=========== CURRENT STATE ===========")
+        # print("Generator: ", self._generator_power)
+        # print("Consumer: ", self._consumer_price)
+        # print("Step: ", self.step_count)
+        # print(f"Min: {self.min_gen_power, self.min_con_price} - Max: {self.max_gen_power, self.max_con_price}")
+        # print("=====================================")
 
-        if self.step_count == 25:
-            """Print current state of the energy market"""
-            # Create and save the plot
-            plt.figure(figsize=(10, 6))
-            plt.plot(self.cum_gen_power, label='Generator Power (P)', marker='o')
-            plt.plot(self.cum_con_price, label='Consumer Price ($)', marker='s')
-            plt.xlabel('Time Step')
-            plt.ylabel('Value')
-            plt.title('Generator Power and Consumer Price Over Time')
-            plt.legend()
-            plt.grid(True)
-            plt.tight_layout()
-            plt.savefig('market_dynamics.png')  # Save figure as PNG
-            plt.close()
+        # if self.step_count == 25:
+        #     """Print current state of the energy market"""
+        #     # Create and save the plot
+        #     plt.figure(figsize=(10, 6))
+        #     plt.plot(self.cum_gen_power, label='Generator Power (P)', marker='o')
+        #     plt.plot(self.cum_con_price, label='Consumer Price ($)', marker='s')
+        #     plt.xlabel('Time Step')
+        #     plt.ylabel('Value')
+        #     plt.title('Generator Power and Consumer Price Over Time')
+        #     plt.legend()
+        #     plt.grid(True)
+        #     plt.tight_layout()
+        #     plt.savefig('market_dynamics.png')  # Save figure as PNG
+        #     plt.close()
+
+            # Save the current state to CSV
+        # Save the current state to CSV
+    # Save the current state to the shared CSV
+
+        self._init_csv_log()
+        state_info = {
+            'episode': self.iter_count,
+            'step': self.step_count,
+            'generator_power': self._generator_power,
+            'consumer_price': self._consumer_price,
+            'generator_profit': self.gen_profit,
+            'consumer_profit': self.con_profit
+        }
+
+        with open(self.csv_file, mode='a', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=state_info.keys())
+            writer.writerow(state_info)
 
 
     def close(self):

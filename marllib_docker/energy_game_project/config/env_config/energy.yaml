@@ -1,13 +1,18 @@
 env: energy
 env_args:
-  map_name: "p2p"
+  map_name: "energy_market"
   max_cycles: 100 
   max_gen_power: 1
   min_gen_power: -1
   max_con_price: 1
   min_con_price: 0.1
-  profit_threshold: 500
+  ind_max_gen_power: 1
+  ind_min_gen_power: -0.8 
+  ind_max_con_price: 1
+  ind_min_con_price: 0.01
   max_steps: 100
+  num_generators: 3       # Number of generators
+  num_consumers: 1             # Number of consumers
  
 mask_flag: False
 global_state_flag: False
